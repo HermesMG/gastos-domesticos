@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Aplicación sencilla para registrar gastos domésticos por rubro y visualizar sus totales." />
+  <title>Mis gastos domésticos</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: rgba(255, 255, 255, 0.92);
+      --surface-solid: #ffffff;
+      --ink: #18212f;
+      --muted: #687386;
+      --line: #dfe5ee;
+      --accent: #2457d6;
+      --accent-dark: #183d99;
+      --danger: #b42318;
+      --shadow: 0 18px 50px rgba(26, 39, 65, 0.11);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 10% 5%, rgba(36, 87, 214, 0.10), transparent 28%),
+        radial-gradient(circle at 95% 95%, rgba(16, 185, 129, 0.10), transparent 30%),
+        var(--bg);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 54px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      padding: 30px 34px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      border-radius: 30px;
+      background: linear-gradient(120deg, rgba(255,255,255,.96), rgba(255,255,255,.76));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-copy {
+      max-width: 760px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 11px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: var(--accent-dark);
+      background: #e8efff;
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2.15rem, 5vw, 4.4rem);
+      line-height: .98;
+      letter-spacing: -.05em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .hero-icon {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 112px;
+      height: 112px;
+      border-radius: 30px;
+      background: linear-gradient(145deg, #2457d6, #4f7df0);
+      box-shadow: 0 16px 32px rgba(36, 87, 214, .25);
+      font-size: 3.4rem;
+      transform: rotate(4deg);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      gap: 24px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .form-panel {
+      position: sticky;
+      top: 20px;
+      padding: 26px;
+    }
+
+    .panel-title {
+      margin: 0 0 6px;
+      font-size: 1.28rem;
+    }
+
+    .panel-subtitle {
+      margin: 0 0 22px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-bottom: 17px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: .9rem;
+      font-weight: 800;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 48px;
+      border: 1.5px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      color: var(--ink);
+      background: rgba(255,255,255,.96);
+      outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(36, 87, 214, .12);
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      width: 100%;
+      min-height: 49px;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      color: #fff;
+      background: linear-gradient(105deg, var(--accent), #4f7df0);
+      box-shadow: 0 11px 24px rgba(36, 87, 214, .23);
+      font-weight: 900;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 29px rgba(36, 87, 214, .28);
+    }
+
+    .primary:active {
+      transform: translateY(0);
+    }
+
+    .privacy-note {
+      margin-top: 17px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      color: #365147;
+      background: #edf9f4;
+      font-size: .85rem;
+      line-height: 1.48;
+    }
+
+    .content {
+      display: grid;
+      gap: 24px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .metric {
+      padding: 20px 21px;
+    }
+
+    .metric-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      display: block;
+      font-size: clamp(1.45rem, 3vw, 2rem);
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: -.03em;
+    }
+
+    .chart-panel,
+    .history-panel {
+      padding: 25px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+
+    .section-head p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .chart {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(72px, 1fr));
+      gap: 14px;
+      align-items: end;
+      min-height: 390px;
+      padding: 24px 12px 0;
+      border-bottom: 2px solid #cfd7e5;
+      background:
+        repeating-linear-gradient(
+          to top,
+          transparent 0,
+          transparent 78px,
+          rgba(104,115,134,.12) 79px,
+          transparent 80px
+        );
+      overflow-x: auto;
+    }
+
+    .bar-column {
+      display: grid;
+      grid-template-rows: 34px 260px auto;
+      gap: 9px;
+      align-items: end;
+      min-width: 72px;
+      height: 100%;
+    }
+
+    .bar-value {
+      align-self: end;
+      overflow: hidden;
+      color: var(--ink);
+      font-size: .78rem;
+      font-weight: 900;
+      text-align: center;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar-track {
+      position: relative;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      height: 260px;
+    }
+
+    .bar {
+      width: min(58px, 78%);
+      min-height: 4px;
+      border-radius: 14px 14px 4px 4px;
+      background: var(--bar-color);
+      box-shadow: 0 11px 24px color-mix(in srgb, var(--bar-color) 26%, transparent);
+      transform-origin: bottom;
+      animation: grow .45s cubic-bezier(.2,.8,.2,1);
+      transition: height .35s cubic-bezier(.2,.8,.2,1);
+    }
+
+    @keyframes grow {
+      from { transform: scaleY(0); }
+      to { transform: scaleY(1); }
+    }
+
+    .bar-label {
+      min-height: 44px;
+      color: var(--muted);
+      font-size: .77rem;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    .empty-chart {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 30px;
+      color: var(--muted);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .empty-chart strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+      font-size: 1.05rem;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .expense-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255,255,255,.85);
+      animation: rowIn .3s ease;
+    }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .category-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--dot-color);
+      box-shadow: 0 0 0 5px color-mix(in srgb, var(--dot-color) 16%, transparent);
+    }
+
+    .expense-main {
+      min-width: 0;
+    }
+
+    .expense-category {
+      display: block;
+      overflow: hidden;
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .expense-date {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+
+    .expense-amount {
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .delete {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 50%;
+      color: var(--danger);
+      background: #fff0ef;
+      font-size: 1.15rem;
+      font-weight: 900;
+      transition: transform .16s ease, background .16s ease;
+    }
+
+    .delete:hover {
+      transform: scale(1.06);
+      background: #ffe4e1;
+    }
+
+    .history-empty {
+      padding: 30px 18px;
+      border: 2px dashed var(--line);
+      border-radius: 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .clear-button {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 12px;
+      color: var(--danger);
+      background: #fff0ef;
+      font-weight: 850;
+    }
+
+    .clear-button:disabled {
+      opacity: .45;
+      cursor: default;
+    }
+
+    .footer {
+      margin-top: 23px;
+      color: var(--muted);
+      font-size: .84rem;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .form-panel {
+        position: static;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        width: min(100% - 18px, 1180px);
+        padding-top: 10px;
+      }
+
+      .hero {
+        padding: 25px 22px;
+        border-radius: 22px;
+      }
+
+      .hero-icon {
+        display: none;
+      }
+
+      .panel {
+        border-radius: 20px;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric:last-child {
+        grid-column: auto;
+      }
+
+      .chart-panel,
+      .history-panel {
+        padding: 20px 16px;
+      }
+
+      .chart {
+        grid-template-columns: repeat(6, 78px);
+        min-height: 355px;
+        padding-inline: 6px;
+      }
+
+      .bar-column {
+        grid-template-rows: 32px 230px auto;
+      }
+
+      .bar-track {
+        height: 230px;
+      }
+
+      .expense-row {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
+
+      .delete {
+        grid-column: 3;
+        grid-row: 1;
+      }
+
+      .expense-amount {
+        grid-column: 3;
+        grid-row: 2;
+      }
+
+      .category-dot {
+        grid-row: 1 / span 2;
+      }
+
+      .expense-main {
+        grid-row: 1 / span 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">Control doméstico</span>
+        <h1>Mis gastos del hogar</h1>
+        <p>
+          Registra cada compra y observa cuánto llevas acumulado en Comestibles,
+          Ropa, Entretenimiento, Educación, Salud y Otros.
+        </p>
+      </div>
+      <div class="hero-icon" aria-hidden="true">📊</div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel form-panel">
+        <h2 class="panel-title">Registrar gasto</h2>
+        <p class="panel-subtitle">Ingresa el monto y selecciona el rubro.</p>
+
+        <form id="expenseForm">
+          <div class="field">
+            <label for="amount">Monto ($)</label>
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="Ej.: 1250"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="category">Rubro</label>
+            <select id="category" name="category" required>
+              <option value="Comestibles">Comestibles</option>
+              <option value="Ropa">Ropa</option>
+              <option value="Entretenimiento">Entretenimiento</option>
+              <option value="Educación">Educación</option>
+              <option value="Salud">Salud</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </div>
+
+          <button class="primary" type="submit">Agregar gasto</button>
+        </form>
+
+        <div class="privacy-note">
+          <strong>Datos locales:</strong> los gastos quedan guardados en este navegador.
+          No se envían a internet ni consumen tokens.
+        </div>
+      </aside>
+
+      <div class="content">
+        <section class="summary-grid" aria-label="Resumen de gastos">
+          <article class="panel metric">
+            <span class="metric-label">Total gastado</span>
+            <strong class="metric-value" id="totalSpent">$ 0</strong>
+          </article>
+
+          <article class="panel metric">
+            <span class="metric-label">Cantidad de compras</span>
+            <strong class="metric-value" id="expenseCount">0</strong>
+          </article>
+
+          <article class="panel metric">
+            <span class="metric-label">Rubro principal</span>
+            <strong class="metric-value" id="topCategory">—</strong>
+          </article>
+        </section>
+
+        <section class="panel chart-panel">
+          <div class="section-head">
+            <div>
+              <h2 class="panel-title">Gastos por rubro</h2>
+              <p>Montos acumulados de todas las compras registradas.</p>
+            </div>
+          </div>
+
+          <div class="chart" id="chart" role="img" aria-label="Gráfica de barras de gastos por rubro"></div>
+        </section>
+
+        <section class="panel history-panel">
+          <div class="section-head">
+            <div>
+              <h2 class="panel-title">Últimos gastos</h2>
+              <p>Puedes borrar una compra individual o limpiar todo el registro.</p>
+            </div>
+            <button class="clear-button" id="clearAll" type="button">Borrar todo</button>
+          </div>
+
+          <div class="history-list" id="historyList"></div>
+        </section>
+      </div>
+    </section>
+
+    <p class="footer">Aplicación local de prueba. Los datos permanecen en el dispositivo y navegador actuales.</p>
+  </main>
+
+  <script>
+    const CATEGORIES = [
+      { name: "Comestibles", color: "#2f80ed" },
+      { name: "Ropa", color: "#9b51e0" },
+      { name: "Entretenimiento", color: "#f2994a" },
+      { name: "Educación", color: "#00a896" },
+      { name: "Salud", color: "#eb5757" },
+      { name: "Otros", color: "#6b7280" }
+    ];
+
+    const STORAGE_KEY = "gastos-domesticos-v1";
+
+    const form = document.getElementById("expenseForm");
+    const amountInput = document.getElementById("amount");
+    const categoryInput = document.getElementById("category");
+    const chart = document.getElementById("chart");
+    const historyList = document.getElementById("historyList");
+    const totalSpent = document.getElementById("totalSpent");
+    const expenseCount = document.getElementById("expenseCount");
+    const topCategory = document.getElementById("topCategory");
+    const clearAllButton = document.getElementById("clearAll");
+
+    let expenses = loadExpenses();
+
+    const moneyFormatter = new Intl.NumberFormat("es-UY", {
+      style: "currency",
+      currency: "UYU",
+      maximumFractionDigits: 2
+    });
+
+    const dateFormatter = new Intl.DateTimeFormat("es-UY", {
+      dateStyle: "short",
+      timeStyle: "short"
+    });
+
+    function loadExpenses() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        return Array.isArray(stored) ? stored : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveExpenses() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(expenses));
+    }
+
+    function getColor(categoryName) {
+      return CATEGORIES.find(item => item.name === categoryName)?.color || "#6b7280";
+    }
+
+    function calculateTotals() {
+      const totals = Object.fromEntries(CATEGORIES.map(category => [category.name, 0]));
+
+      for (const expense of expenses) {
+        if (Object.prototype.hasOwnProperty.call(totals, expense.category)) {
+          totals[expense.category] += Number(expense.amount) || 0;
+        }
+      }
+
+      return totals;
+    }
+
+    function renderSummary(totals) {
+      const overall = Object.values(totals).reduce((sum, value) => sum + value, 0);
+      totalSpent.textContent = moneyFormatter.format(overall);
+      expenseCount.textContent = expenses.length.toLocaleString("es-UY");
+
+      const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+      topCategory.textContent = ranked[0]?.[1] > 0 ? ranked[0][0] : "—";
+    }
+
+    function renderChart(totals) {
+      chart.innerHTML = "";
+      const maxValue = Math.max(...Object.values(totals), 0);
+
+      for (const category of CATEGORIES) {
+        const value = totals[category.name];
+        const height = maxValue > 0 ? Math.max((value / maxValue) * 100, value > 0 ? 3 : 0) : 0;
+
+        const column = document.createElement("div");
+        column.className = "bar-column";
+        column.innerHTML = `
+          <div class="bar-value" title="${moneyFormatter.format(value)}">
+            ${moneyFormatter.format(value)}
+          </div>
+          <div class="bar-track">
+            <div
+              class="bar"
+              style="height:${height}%; --bar-color:${category.color}"
+              title="${category.name}: ${moneyFormatter.format(value)}"
+              aria-label="${category.name}: ${moneyFormatter.format(value)}"
+            ></div>
+          </div>
+          <div class="bar-label">${category.name}</div>
+        `;
+        chart.appendChild(column);
+      }
+
+      if (maxValue === 0) {
+        const empty = document.createElement("div");
+        empty.className = "empty-chart";
+        empty.innerHTML = `
+          <div>
+            <strong>Aún no hay gastos.</strong>
+            Agrega la primera compra para construir la gráfica.
+          </div>
+        `;
+        chart.appendChild(empty);
+      }
+    }
+
+    function renderHistory() {
+      historyList.innerHTML = "";
+      clearAllButton.disabled = expenses.length === 0;
+
+      if (expenses.length === 0) {
+        historyList.innerHTML = `
+          <div class="history-empty">
+            No hay compras registradas todavía.
+          </div>
+        `;
+        return;
+      }
+
+      const newestFirst = [...expenses].sort((a, b) => b.createdAt - a.createdAt);
+
+      for (const expense of newestFirst) {
+        const row = document.createElement("article");
+        row.className = "expense-row";
+        row.innerHTML = `
+          <span class="category-dot" style="--dot-color:${getColor(expense.category)}" aria-hidden="true"></span>
+          <div class="expense-main">
+            <strong class="expense-category">${expense.category}</strong>
+            <span class="expense-date">${dateFormatter.format(new Date(expense.createdAt))}</span>
+          </div>
+          <strong class="expense-amount">${moneyFormatter.format(expense.amount)}</strong>
+          <button
+            class="delete"
+            type="button"
+            aria-label="Eliminar gasto de ${expense.category}"
+            title="Eliminar gasto"
+          >×</button>
+        `;
+
+        row.querySelector(".delete").addEventListener("click", () => {
+          expenses = expenses.filter(item => item.id !== expense.id);
+          saveExpenses();
+          render();
+        });
+
+        historyList.appendChild(row);
+      }
+    }
+
+    function render() {
+      const totals = calculateTotals();
+      renderSummary(totals);
+      renderChart(totals);
+      renderHistory();
+    }
+
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const amount = amountInput.valueAsNumber;
+      const category = categoryInput.value;
+
+      if (!Number.isFinite(amount) || amount <= 0 || !CATEGORIES.some(item => item.name === category)) {
+        amountInput.focus();
+        return;
+      }
+
+      expenses.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+        amount: Math.round(amount * 100) / 100,
+        category,
+        createdAt: Date.now()
+      });
+
+      saveExpenses();
+      render();
+
+      form.reset();
+      categoryInput.value = "Comestibles";
+      amountInput.focus();
+    });
+
+    clearAllButton.addEventListener("click", () => {
+      if (expenses.length === 0) return;
+
+      const confirmed = window.confirm("¿Quieres borrar todos los gastos registrados?");
+      if (!confirmed) return;
+
+      expenses = [];
+      saveExpenses();
+      render();
+      amountInput.focus();
+    });
+
+    render();
+  </script>
+</body>
+</html>
